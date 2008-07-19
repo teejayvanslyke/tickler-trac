@@ -1,14 +1,14 @@
 require 'tickler-trac/version'
 
-AUTHOR = 'FIXME full name'  # can also be an array of Authors
-EMAIL = "FIXME email"
-DESCRIPTION = "description of gem"
+AUTHOR = 'T.J. VanSlyke'  # can also be an array of Authors
+EMAIL = "tj@elctech.com"
+DESCRIPTION = "Trac adapter for Tickler"
 GEM_NAME = 'tickler-trac' # what ppl will type to install your gem
 RUBYFORGE_PROJECT = 'tickler-trac' # The unix name for your project
 HOMEPATH = "http://#{RUBYFORGE_PROJECT}.rubyforge.org"
 DOWNLOAD_PATH = "http://rubyforge.org/projects/#{RUBYFORGE_PROJECT}"
 EXTRA_DEPENDENCIES = [
-#  ['activesupport', '>= 1.3.1']
+  ['tickler-core', '>= 0.0.1']
 ]    # An array of rubygem dependencies [name, version]
 
 @config_file = "~/.rubyforge/user-config.yml"
@@ -34,7 +34,7 @@ end
 REV = nil
 # UNCOMMENT IF REQUIRED:
 # REV = YAML.load(`svn info`)['Revision']
-VERS = Tickler-trac::VERSION::STRING + (REV ? ".#{REV}" : "")
+VERS = TicklerTrac::VERSION::STRING + (REV ? ".#{REV}" : "")
 RDOC_OPTS = ['--quiet', '--title', 'tickler-trac documentation',
     "--opname", "index.html",
     "--line-numbers",

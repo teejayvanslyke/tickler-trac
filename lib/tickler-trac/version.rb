@@ -1,4 +1,4 @@
-module Tickler-trac
+module TicklerTrac
   module VERSION #:nodoc:
     MAJOR = 0
     MINOR = 0
