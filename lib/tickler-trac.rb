@@ -12,15 +12,15 @@ module Tickler
     #=====================================================================# 
     # Configuration options from Ticklerfile
     def url(url=nil)
-      @url = url if url
+      @url ||= url
     end
 
     def username(username=nil)
-      @username = username if username
+      @username ||= username 
     end
 
     def password(password=nil)
-      @password = password if password
+      @password ||= password
     end
 
     def use_ssl?(use_ssl=false)
@@ -34,6 +34,32 @@ module Tickler
     
     def save_milestone(milestone)
       connection.call('ticket.milestone.create', milestone.attributes[:title], {})
+    end
+
+    def load_ticket(id)
+      result = connection.call('ticket.get', id)
+      id = result[0]
+      created_at = result[1]
+      updated_at = result[2]
+      attributes = result[3]
+      title      = attributes['summary']
+
+      Tickler::Ticket.new(attributes.merge(
+                          :id => id, 
+                          :title => title, 
+                          :created_at => created_at,
+                          :updated_at => updated_at))
+    end
+
+    def find_tickets(*args)
+      if args.length == 1 && args[0].is_a?(Fixnum)
+        load_ticket(args[0])
+      else
+        ids = connection.call('ticket.query', 'order=priority')
+        result = []
+        ids.each {|id| result << load_ticket(id)}
+        return result
+      end
     end
 
     def connection

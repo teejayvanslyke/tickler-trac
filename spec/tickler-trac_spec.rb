@@ -62,6 +62,76 @@ describe Tickler::TracTaskAdapter do
           { :title => "My Milestone's Title" }))
       end
     end
+
+    describe "load_ticket" do
+      before(:each) do
+        @connection.stub!(:call).
+          with('ticket.get', 324).
+          and_return([324, 123, 123, {'summary' => 'actually the title',
+                                     'description' => 'my ticket'}])
+      end
+
+      it "loads the attributes" do
+        @connection.should_receive(:call).
+          with('ticket.get', 324).
+          and_return([324, 123, 123, {'summary' => 'actually the title',
+                                     'description' => 'my ticket'}])
+
+        @adapter.load_ticket(324)
+      end
+
+      it "creates a new Tickler::Ticket instance" do
+        result = @adapter.load_ticket(324)
+        result.should be_instance_of(Tickler::Ticket)
+        result.title.should == 'actually the title'
+        result.id.should == 324
+      end
+    end
+
+    describe "find_tickets" do
+
+      describe ":all" do
+
+        describe "no options" do
+
+          it "finds all tickets" do
+            @connection.should_receive(:call).
+              with('ticket.query', 'order=priority').
+              and_return([123, 456])
+
+            @adapter.should_receive(:load_ticket).twice
+
+            @adapter.find_tickets(:all)
+          end
+
+        end
+
+        describe "with attribute filters" do
+
+        end
+
+      end
+
+      describe ":first" do
+        
+      end
+
+      describe "ID" do
+
+        it "loads the ticket" do
+          @ticket = mock(Tickler::Ticket)
+
+          @adapter.should_receive(:load_ticket).
+            with(234).
+            and_return(@ticket)
+
+          @adapter.find_tickets(234).should == @ticket
+        end
+
+      end
+
+    end
+
   end
 
 
