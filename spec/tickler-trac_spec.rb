@@ -27,12 +27,12 @@ describe Tickler::TracTaskAdapter do
     end
 
     it "opens a connection" do
-      XMLRPC::Client.should_receive(:new3).
+      XMLRPC_Client.should_receive(:new3).
         with(:host => @host,
              :path => @path + '/login/xmlrpc',
              :user => @username,
              :password => @password,
-             :use_ssl => false)
+             :use_ssl => nil)
       @adapter.open_connection
     end
   end
@@ -99,7 +99,24 @@ describe Tickler::TracTaskAdapter do
               with('ticket.query', 'order=priority').
               and_return([123, 456])
 
-            @adapter.should_receive(:load_ticket).twice
+            @tickets = [ [:ticket1], [:ticket2] ]
+
+            @connection.should_receive(:call).
+              with('system.multicall', 
+                   [
+                   { 'methodName' => 'ticket.get',
+                     'params'     => ['123'] },
+                   { 'methodName' => 'ticket.get',
+                     'params'     => ['456'] }
+                    ] 
+                  ).
+                    and_return(@tickets)
+
+            @adapter.should_receive(:create_ticket_from_xmlrpc).
+              with(:ticket1)
+            @adapter.should_receive(:create_ticket_from_xmlrpc).
+              with(:ticket2)
+
 
             @adapter.find_tickets(:all)
           end

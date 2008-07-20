@@ -3,7 +3,7 @@ $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname
 
 require 'rubygems'
 require 'tickler'
-require 'xmlrpc/client'
+require 'xmlrpc_client_no_warning'
 
 module Tickler
   class TracTaskAdapter < Tickler::TaskAdapter
@@ -23,8 +23,8 @@ module Tickler
       @password ||= password
     end
 
-    def use_ssl?(use_ssl=false)
-      @use_ssl = use_ssl 
+    def use_ssl?(use_ssl=nil)
+      @use_ssl ||= use_ssl 
     end
     #=====================================================================# 
 
@@ -38,6 +38,10 @@ module Tickler
 
     def load_ticket(id)
       result = connection.call('ticket.get', id)
+      create_ticket_from_xmlrpc(result)
+    end
+
+    def create_ticket_from_xmlrpc(result)
       id = result[0]
       created_at = result[1]
       updated_at = result[2]
@@ -56,8 +60,19 @@ module Tickler
         load_ticket(args[0])
       else
         ids = connection.call('ticket.query', 'order=priority')
+
+        multicall_args = []
+        ids.each do |id|
+          multicall_args << { 'methodName' => 'ticket.get',
+                              'params'     => ["#{id}"] }
+        end
+
+        print "Retrieving #{ids.size} tickets...\n"
+        tickets = connection.call('system.multicall', multicall_args)
+
         result = []
-        ids.each {|id| result << load_ticket(id)}
+        tickets.each {|t| result << create_ticket_from_xmlrpc(t[0])}
+        print "\n"
         return result
       end
     end
@@ -68,7 +83,7 @@ module Tickler
 
     def open_connection
         uri = URI.parse url
-        @connection = XMLRPC::Client.new3(:host => uri.host, 
+        @connection = XMLRPC_Client.new3(:host => uri.host, 
                                           :path => "#{uri.path}/login/xmlrpc", 
                                           :user => username, 
                                           :password => password, 
