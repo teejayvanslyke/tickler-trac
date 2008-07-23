@@ -77,6 +77,31 @@ module Tickler
       end
     end
 
+    def find_milestones(*args)
+      if args.length == 1 && args[0].is_a?(Fixnum)
+        load_milestone(args[0])
+      else
+        ids = connection.call('ticket.milestone.getAll')
+
+        multicall_args = []
+        ids.each do |id|
+          multicall_args << { 'methodName' => 'ticket.milestone.get',
+                              'params'     => ["#{id}"] }
+        end
+
+        print "Retrieving #{ids.size} milestones...\n"
+        milestones = connection.call('system.multicall', multicall_args)
+
+        result = []
+        milestones.each {|t| result << create_milestone_from_xmlrpc(t[0])}
+        return result
+      end
+    end
+
+    def create_milestone_from_xmlrpc(result)
+      Tickler::Milestone.new(:title => result['name'], :id => '#')
+    end
+
     def connection
       @connection ||= self.open_connection
     end

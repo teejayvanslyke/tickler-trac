@@ -149,6 +149,73 @@ describe Tickler::TracTaskAdapter do
 
     end
 
+    describe "find_milestones" do
+
+      describe ":all" do
+
+        describe "no options" do
+
+          it "finds all milestones" do
+            @connection.should_receive(:call).
+              with('ticket.milestone.getAll').
+              and_return([123, 456])
+
+            @milestones = [ 
+              {:name => 'Milestone1'}, 
+              {:name => 'Milestone2'}
+            ]
+
+            @connection.should_receive(:call).
+              with('system.multicall', 
+                   [
+                   { 'methodName' => 'ticket.milestone.get',
+                     'params'     => ['123'] },
+                   { 'methodName' => 'ticket.milestone.get',
+                     'params'     => ['456'] }
+                    ] 
+                  ).
+                    and_return(@milestones)
+
+            @adapter.should_receive(:create_milestone_from_xmlrpc).
+              with(@milestones[0])
+            @adapter.should_receive(:create_milestone_from_xmlrpc).
+              with(@milestones[1])
+
+
+            result = @adapter.find_milestones(:all)
+            result.length.should == 2
+            result[0].title.should == 'Milestone1'
+            result[1].title.should == 'Milestone2'
+          end
+
+        end
+
+        describe "with attribute filters" do
+
+        end
+
+      end
+
+      describe ":first" do
+        
+      end
+
+      describe "ID" do
+
+        it "loads the milestone" do
+          @milestone = mock(Tickler::Milestone)
+
+          @adapter.should_receive(:load_milestone).
+            with(234).
+            and_return(@milestone)
+
+          @adapter.find_milestones(234).should == @milestone
+        end
+
+      end
+
+    end
+
   end
 
 
