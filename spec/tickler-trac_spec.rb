@@ -125,6 +125,33 @@ describe Tickler::TracTaskAdapter do
 
         describe "with attribute filters" do
 
+          it "finds tickets with the specified criteria" do
+            @connection.should_receive(:call).
+              with('ticket.query', 'order=priority&status=open').
+              and_return([123, 456])
+
+            @tickets = [ [:ticket1], [:ticket2] ]
+
+            @connection.should_receive(:call).
+              with('system.multicall', 
+                   [
+                   { 'methodName' => 'ticket.get',
+                     'params'     => ['123'] },
+                   { 'methodName' => 'ticket.get',
+                     'params'     => ['456'] }
+                    ] 
+                  ).
+                    and_return(@tickets)
+
+            @adapter.should_receive(:create_ticket_from_xmlrpc).
+              with(:ticket1)
+            @adapter.should_receive(:create_ticket_from_xmlrpc).
+              with(:ticket2)
+
+
+            @adapter.find_tickets(:all, :status => 'open')
+          end
+
         end
 
       end
@@ -133,7 +160,7 @@ describe Tickler::TracTaskAdapter do
         
       end
 
-      describe "ID" do
+      describe "ID as fixnum" do
 
         it "loads the ticket" do
           @ticket = mock(Tickler::Ticket)
@@ -146,6 +173,21 @@ describe Tickler::TracTaskAdapter do
         end
 
       end
+
+      describe "ID as string" do
+
+        it "loads the ticket" do
+          @ticket = mock(Tickler::Ticket)
+
+          @adapter.should_receive(:load_ticket).
+            with(234).
+            and_return(@ticket)
+
+          @adapter.find_tickets('234').should == @ticket
+        end
+
+      end
+
 
     end
 
@@ -161,8 +203,8 @@ describe Tickler::TracTaskAdapter do
               and_return([123, 456])
 
             @milestones = [ 
-              {:name => 'Milestone1'}, 
-              {:name => 'Milestone2'}
+              [{:name => 'Milestone1'}], 
+              [{:name => 'Milestone2'}]
             ]
 
             @connection.should_receive(:call).
@@ -177,15 +219,13 @@ describe Tickler::TracTaskAdapter do
                     and_return(@milestones)
 
             @adapter.should_receive(:create_milestone_from_xmlrpc).
-              with(@milestones[0])
+              with(@milestones[0].first).
+              and_return
             @adapter.should_receive(:create_milestone_from_xmlrpc).
-              with(@milestones[1])
-
+              with(@milestones[1].first)
 
             result = @adapter.find_milestones(:all)
             result.length.should == 2
-            result[0].title.should == 'Milestone1'
-            result[1].title.should == 'Milestone2'
           end
 
         end

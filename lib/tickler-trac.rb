@@ -56,10 +56,18 @@ module Tickler
     end
 
     def find_tickets(*args)
-      if args.length == 1 && args[0].is_a?(Fixnum)
-        load_ticket(args[0])
+      if args.length == 1 && 
+        (args[0].is_a?(Fixnum) || args[0].is_a?(String))
+        load_ticket(args[0].to_i)
       else
-        ids = connection.call('ticket.query', 'order=priority')
+        query = 'order=priority'
+        if args.length > 1
+          args[1].each do |key, value|
+            query += '&' + key.to_s + '=' + value
+          end
+        end
+
+        ids = connection.call('ticket.query', query)
 
         multicall_args = []
         ids.each do |id|
@@ -67,7 +75,6 @@ module Tickler
                               'params'     => ["#{id}"] }
         end
 
-        print "Retrieving #{ids.size} tickets...\n"
         tickets = connection.call('system.multicall', multicall_args)
 
         result = []
@@ -89,7 +96,6 @@ module Tickler
                               'params'     => ["#{id}"] }
         end
 
-        print "Retrieving #{ids.size} milestones...\n"
         milestones = connection.call('system.multicall', multicall_args)
 
         result = []
